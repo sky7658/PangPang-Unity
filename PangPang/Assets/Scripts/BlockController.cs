@@ -4,34 +4,15 @@ using UnityEngine;
 
 public class BlockController : MonoBehaviour
 {
-    public Block[,] blocks;
-    GameBoard gameBoard;
+    Board board;
 
     void Start()
     {
-        gameBoard = new GameBoard();
-
-        gameBoard.RepairBoard();
-        blocks = new Block[gameBoard.GetBoardMaxSize(), gameBoard.GetBoardMaxSize()];
-        AllBlocksDraw();
-    }
-
-    void AllBlocksDraw()
-    {
-        for (int y = 0; y < blocks.GetLength(0); y++)
-        {
-            for (int x = 0; x < blocks.GetLength(1); x++)
-            {
-                if (blocks[y, x] != null)
-                    BlockPool.instance.ReturnBlock(blocks[y, x]);
-                blocks[y, x] = BlockPool.instance.GetBlock();
-                blocks[y, x].InitBlock((Block_Type)gameBoard.GetBoard()[y, x], (y, x));
-            }
-        }
+        board = new Board();
+        board.InitBoard();
     }
 
     private Vector2 arrowVector, mousePos;
-    (int, int) hitpos;
     private RaycastHit2D b1, b2;
     void MouseDrag()
     {
@@ -43,7 +24,6 @@ public class BlockController : MonoBehaviour
             arrowVector -= mousePos;
 
             b1 = Physics2D.Raycast(mousePos, transform.forward);
-            hitpos = ((int)b1.transform.position.y, (int)b1.transform.position.x);
         }
         if (Input.GetMouseButtonUp(0))
         {
@@ -52,40 +32,136 @@ public class BlockController : MonoBehaviour
 
             arrowVector = ArrowCal(arrowVector);
 
-            Vector2 check = new Vector2(b1.transform.position.x + arrowVector.x, b1.transform.position.y + arrowVector.y);
+            Vector2 check = new Vector2(b1.transform.position.x + (arrowVector.x * 1.3f), b1.transform.position.y + (arrowVector.y * 1.3f));
             b2 = Physics2D.Raycast(check, Vector2.zero);
 
             if (b2)
-                OrderSwap(b1.transform.GetComponent<Block>(), b2.transform.GetComponent<Block>());
+            {
+                StartCoroutine(ExecuteSwapAction(b1.transform.GetComponent<Block>(), arrowVector));
+            }
         }
     }
-    Vector2 ArrowCal(Vector2 vc)
+    private Vector2 ArrowCal(Vector2 vc)
     {
         Vector2 newVc = Vector2.zero;
         if (Mathf.Abs(vc.x) < Mathf.Abs(vc.y))
         {
             newVc.x = 0;
-            if (vc.y > 0) newVc.y = 0.5f;
-            else newVc.y = -0.5f;
+            if (vc.y > 0) newVc.y = 1f;
+            else newVc.y = -1f;
         }
         else
         {
             newVc.y = 0;
-            if (vc.x > 0) newVc.x = 0.5f;
-            else newVc.x = -0.5f;
+            if (vc.x > 0) newVc.x = 1f;
+            else newVc.x = -1f;
         }
         return newVc;
     }
 
-    void OrderSwap(Block _b1, Block _b2)
+    // 블럭 스왑 애니메이션
+    private IEnumerator MoveToAction(Block baseBlock, Vector2 to, float duration)
     {
-        var swapPos = _b1.myPos;
+        Vector2 startPos = baseBlock.transform.position;
 
-        _b1.target = _b2.transform.position;
-        _b1.blockState = BlockState.SWAP;
+        float elapsed = 0.0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.smoothDeltaTime;
+            baseBlock.transform.position = Vector2.Lerp(startPos, to, elapsed / duration);
+            yield return null;
+        }
 
-        _b2.target = _b1.transform.position;
-        _b2.blockState = BlockState.SWAP;
+        baseBlock.transform.position = to;
+
+        yield break;
+    }
+
+    // 블럭 스왑 애니메이션 명령
+    private IEnumerator ExecuteSwapAction(Block curBlock, Vector2 swipeD)
+    {
+        Block targetBlock = board.blocks[curBlock.myPos.y + -(int)swipeD.y, curBlock.myPos.x + (int)swipeD.x];
+        Block baseBlock = board.blocks[curBlock.myPos.y, curBlock.myPos.x];
+
+        Vector2 targetPos = targetBlock.transform.position;
+        Vector2 basePos = baseBlock.transform.position;
+
+        StartCoroutine(MoveToAction(baseBlock, targetPos, AnimationLength.BLOCK_SWAP));
+        StartCoroutine(MoveToAction(targetBlock, basePos, AnimationLength.BLOCK_SWAP));
+
+        yield return new WaitForSeconds(AnimationLength.BLOCK_SWAP);
+
+        (int y, int x) baseXY = curBlock.myPos;
+        (int y, int x) targetXY = (curBlock.myPos.y + -(int)swipeD.y, curBlock.myPos.x + (int)swipeD.x);
+
+        board.blocks[targetXY.y, targetXY.x] = baseBlock;
+        board.blocks[baseXY.y, baseXY.x] = targetBlock;
+
+        HashSet<(int y, int x)> matches = board.IsMatch_All();
+
+        if (matches.Count > 0)
+        {
+            board.blocks[baseXY.y, baseXY.x].myPos = baseXY;
+            board.blocks[targetXY.y, targetXY.x].myPos = targetXY;
+
+            while (true)
+            {
+                if (matches.Count == 0) break;
+                StartCoroutine(BlockDropAction(matches));
+                yield return new WaitForSeconds(AnimationLength.BLOCK_DROP);
+                matches = board.IsMatch_All();
+            }
+
+            yield break;
+        }
+
+        StartCoroutine(MoveToAction(baseBlock, basePos, AnimationLength.BLOCK_SWAP));
+        StartCoroutine(MoveToAction(targetBlock, targetPos, AnimationLength.BLOCK_SWAP));
+
+        board.blocks[targetXY.y, targetXY.x] = targetBlock;
+        board.blocks[baseXY.y, baseXY.x] = baseBlock;
+
+        yield break;
+    }
+
+    // 매치 시 블럭이 없어지는 애니메이션
+    private IEnumerator BlockPangAction(Block pangBlock, float toScale, float speed)
+    {
+        Transform pangBlockT = pangBlock.transform;
+
+        float factor;
+        while(pangBlockT.localScale.x > toScale)
+        {
+            factor = Time.deltaTime * speed;
+            pangBlockT.localScale = new Vector3(pangBlockT.localScale.x - factor, pangBlockT.localScale.y - factor, pangBlockT.localScale.z);
+            yield return null;
+        }
+
+        BlockPool.instance.ReturnBlock(pangBlock);
+
+        yield break;
+    }
+
+    private IEnumerator BlockDropAction(HashSet<(int y, int x)> matches)
+    {
+        foreach (var match in matches)
+        {
+            StartCoroutine(BlockPangAction(board.blocks[match.y, match.x], 0.3f, 3f));
+            board.blocks[match.y, match.x] = null;
+        }
+        yield return new WaitForSeconds(AnimationLength.BLOCK_PANG);
+
+        board.DownBlock();
+
+        foreach (var block in board.blocks)
+        {
+            if (block.dropCount > 0)
+            {
+
+                Vector2 to = BaseInfo.SetBlockPos(block.myPos.y, block.myPos.x, 0);
+                StartCoroutine(MoveToAction(block, to, AnimationLength.BLOCK_DROP));
+            }
+        }
     }
 
     void Update()

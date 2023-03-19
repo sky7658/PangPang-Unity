@@ -2,6 +2,16 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
+public class BlockInfo
+{
+    public Queue<Block> blockQueue = new Queue<Block>();
+    public GameObject blockPrefab;
+    public Transform parent;
+    public Block_Type _type;
+    public int poolCount;
+}
+
 public class BlockPool : MonoBehaviour
 {
     public static BlockPool instance;
@@ -12,50 +22,68 @@ public class BlockPool : MonoBehaviour
     }
 
     [SerializeField]
-    private GameObject blockPrefab;
-    [SerializeField]
-    private Transform[] parent = new Transform[2];
-    private Queue<Block> blocksQueue = new Queue<Block>();
-    private int maxBlocknum = 50;
+    private List<BlockInfo> blockInfos = new List<BlockInfo> ();
+
     private void Initialize()
     {
-        for (int i = 0; i < maxBlocknum; i++)
-            blocksQueue.Enqueue(CreateBlock());
+        foreach (var blockInfo in blockInfos)
+            InsertQueue(blockInfo);
     }
 
-    private Block CreateBlock()
+    private void InsertQueue(BlockInfo blockInfo)
     {
-        var newBlock = Instantiate(blockPrefab).GetComponent<Block>();
-        newBlock.transform.SetParent(parent[0]);
-        newBlock.gameObject.SetActive(false);
-
-        return newBlock;
-    }
-
-    public Block GetBlock()
-    {
-        if (blocksQueue.Count > 0)
+        for(int i = 0; i < blockInfo.poolCount; i++)
         {
-            var obj = blocksQueue.Dequeue();
-            obj.transform.SetParent(parent[1]);
-            obj.gameObject.SetActive(true);
+            var newBlock = Instantiate(blockInfo.blockPrefab).GetComponent<Block>();
 
-            return obj;
-        }
-        else
-        {
-            var newObj = CreateBlock();
-            newObj.transform.SetParent(parent[1]);
-            newObj.gameObject.SetActive(true);
+            newBlock.gameObject.SetActive(false);
+            if (blockInfo.parent != null)
+                newBlock.transform.SetParent(blockInfo.parent);
+            else
+                newBlock.transform.SetParent(transform);
 
-            return newObj;
+            blockInfo.blockQueue.Enqueue(newBlock);
         }
     }
 
-    public void ReturnBlock(Block obj)
+    public Block GetBlock(Block_Type type)
     {
-        obj.transform.SetParent(parent[0]);
-        obj.gameObject.SetActive(false);
-        blocksQueue.Enqueue(obj);
+        foreach (var blockInfo in blockInfos)
+        {
+            if (blockInfo._type == type)
+            {
+                if (blockInfo.blockQueue.Count > 0)
+                {
+                    var block = blockInfo.blockQueue.Dequeue();
+                    block.gameObject.SetActive(true);
+                    return block;
+                }
+                else
+                {
+                    var newBlock = Instantiate(blockInfo.blockPrefab).GetComponent<Block>();
+                    newBlock.gameObject.SetActive(true);
+                    if (blockInfo.parent != null)
+                        newBlock.transform.SetParent(blockInfo.parent);
+                    else
+                        newBlock.transform.SetParent(transform);
+                    return newBlock;
+                }
+            }
+        }
+
+        Debug.Log("오브젝트를 찾을 수 없습니다.");
+        return null;
+    }
+
+    public void ReturnBlock(Block block)
+    {
+        foreach (var blockInfo in blockInfos)
+        {
+            if (blockInfo._type == block.myType)
+            {
+                block.gameObject.SetActive(false);
+                blockInfo.blockQueue.Enqueue(block);
+            }
+        }
     }
 }
