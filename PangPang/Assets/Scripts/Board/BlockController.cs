@@ -97,7 +97,7 @@ namespace PangPang.Board
             bool targetMatch = board.IsMatch_Part(board.blocks[baseXY.y, baseXY.x], matchedBlockList); 
             bool baseMatch = board.IsMatch_Part(board.blocks[targetXY.y, targetXY.x], matchedBlockList);
 
-            if (baseMatch || targetMatch)
+            if (baseMatch || targetMatch || IsAroundBlockSwap(board.blocks[baseXY.y, baseXY.x], board.blocks[targetXY.y, targetXY.x]))
             {
                 bool allMatch = true;
 
@@ -135,10 +135,7 @@ namespace PangPang.Board
             {
                 if(block == null) continue;
 
-                int x = block.myPos.x;
-                int y = block.myPos.y;
-
-                if (block.match > MatchType.THREE)
+                if (block.match > MatchType.THREE && block.transform.position.Equals(block.specialMoveTarget))
                 {
                     List<Block> specialBlockList = new List<Block>();
                     board.CreateSpecialBlock(block.match, block, specialBlockList);
@@ -147,7 +144,7 @@ namespace PangPang.Board
                     {
                         int sx = specialBlock.myPos.x;
                         int sy = specialBlock.myPos.y;
-                        StartCoroutine(BlockAction.SpecialBlockAction(specialBlock, BaseInfo.SetBlockPos(y, x, 0), AnimationLength.BLOCK_PANG));
+                        StartCoroutine(BlockAction.SpecialBlockAction(specialBlock, specialBlock.specialMoveTarget, AnimationLength.BLOCK_PANG));
                         board.blocks[sy, sx].match = MatchType.NONE;
                         board.blocks[sy, sx] = null;
                     }
@@ -231,7 +228,24 @@ namespace PangPang.Board
 
                     break;
             }
+        }
 
+        private bool IsAroundBlockSwap(Block block1, Block block2)
+        {
+            bool isAround = false;
+
+            if(block1.skill == BlockSkill.AROUND)
+            {
+                isAround = true;
+                BlockPang(block1.myPos.x, block1.myPos.y);
+            }
+            if(block2.skill == BlockSkill.AROUND)
+            {
+                isAround = true;
+                BlockPangType(block2.myPos.x, block2.myPos.y);
+            }
+
+            return isAround;
         }
 
         void Update()

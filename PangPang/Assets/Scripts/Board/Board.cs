@@ -28,7 +28,7 @@ namespace PangPang.Board
         }
         private void BoardSetting()
         {
-            // Test용 코드
+            //Test용 코드
             //m_Blocks[2, 2] = BlockPool.instance.GetBlock(Block_Type.RED);
             //m_Blocks[2, 2].InitBlock(Block_Type.RED, (2, 2), 0);
 
@@ -37,9 +37,6 @@ namespace PangPang.Board
 
             //m_Blocks[4, 3] = BlockPool.instance.GetBlock(Block_Type.RED);
             //m_Blocks[4, 3].InitBlock(Block_Type.RED, (4, 3), 0);
-
-            ////m_Blocks[4, 4] = BlockPool.instance.GetBlock(Block_Type.RED);
-            ////m_Blocks[4, 4].InitBlock(Block_Type.RED, (4, 4), 0);
 
             //m_Blocks[4, 1] = BlockPool.instance.GetBlock(Block_Type.RED);
             //m_Blocks[4, 1].InitBlock(Block_Type.RED, (4, 1), 0);
@@ -155,7 +152,7 @@ namespace PangPang.Board
 
             if (matchedBlockList.Count >= 3)
             {
-                SetMatchBlock(matchedBlockList);
+                SetMatchBlock(matchedBlockList, baseBlock.transform.position);
                 bFound = true;
             }
 
@@ -177,7 +174,7 @@ namespace PangPang.Board
 
             if (matchedBlockList.Count >= 3)
             {
-                SetMatchBlock(matchedBlockList);
+                SetMatchBlock(matchedBlockList, baseBlock.transform.position);
                 bFound = true;
             }
 
@@ -255,9 +252,10 @@ namespace PangPang.Board
             return matches;
         }
 
-        private void SetMatchBlock(List<Block> matchedBlock)
+        private void SetMatchBlock(List<Block> matchedBlock, UnityEngine.Vector2 moveTarget)
         {
             matchedBlock.ForEach(block => block.UpdateMatchType((MatchType)matchedBlock.Count));
+            matchedBlock.ForEach(block => block.UpdateMoveTarget(moveTarget));
         }
 
         public void DownBlock()

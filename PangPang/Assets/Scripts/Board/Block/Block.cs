@@ -11,6 +11,7 @@ namespace PangPang.Board
         public Block_Type myType;
         public BlockSkill skill;
         public BlockState blockState;
+        public Vector2 specialMoveTarget;
         public (int y, int x) myPos;
         public int dropCount { get; set; }  // Drop È½¼ö
 
@@ -26,6 +27,10 @@ namespace PangPang.Board
             if (match == MatchType.NONE)
                 match = matchType;
             else match = match.Add(matchType);
+        }
+        public void UpdateMoveTarget(Vector2 moveTarget)
+        {
+            specialMoveTarget = moveTarget;
         }
         public void UpdateBlockSkill()
         {
