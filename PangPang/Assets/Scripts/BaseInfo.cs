@@ -5,7 +5,7 @@ using UnityEngine;
 public static class AnimationLength 
 {
     public static float BLOCK_SWAP = 0.2f;
-    public static float BLOCK_PANG = 0.1f;
+    public static float BLOCK_PANG = 0.2f;
     public static float BLOCK_DROP = 0.2f;
 }
 

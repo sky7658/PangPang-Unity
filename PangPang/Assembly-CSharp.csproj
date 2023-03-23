@@ -56,13 +56,16 @@
     <Analyzer Include="C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\Extensions\Microsoft\Visual Studio Tools for Unity\Analyzers\Microsoft.Unity.Analyzers.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\Block.cs" />
-    <Compile Include="Assets\Scripts\BlockController.cs" />
+    <Compile Include="Assets\Scripts\Board\Block\Block.cs" />
+    <Compile Include="Assets\Scripts\Board\BlockController.cs" />
     <Compile Include="Assets\Scripts\CameraAgent.cs" />
-    <Compile Include="Assets\Scripts\BackBoard.cs" />
-    <Compile Include="Assets\Scripts\BlockPool.cs" />
-    <Compile Include="Assets\Scripts\Board.cs" />
+    <Compile Include="Assets\Scripts\Quest\MatchQuest.cs" />
     <Compile Include="Assets\Scripts\BaseInfo.cs" />
+    <Compile Include="Assets\Scripts\BackBoard.cs" />
+    <Compile Include="Assets\Scripts\Board\Block\BlockDefine.cs" />
+    <Compile Include="Assets\Scripts\Board\Block\BlockPool.cs" />
+    <Compile Include="Assets\Scripts\Action\BlockAction.cs" />
+    <Compile Include="Assets\Scripts\Board\Board.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">

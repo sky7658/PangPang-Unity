@@ -134,7 +134,7 @@ GameObject:
   - component: {fileID: 130519976}
   - component: {fileID: 130519975}
   m_Layer: 0
-  m_Name: GameObject (1)
+  m_Name: BlockController
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -160,7 +160,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 130519974}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -6.5766325, y: -1.816172, z: -0.09141902}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -419,7 +419,7 @@ GameObject:
   - component: {fileID: 790963426}
   - component: {fileID: 790963425}
   m_Layer: 0
-  m_Name: GameObject
+  m_Name: BackGround
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
