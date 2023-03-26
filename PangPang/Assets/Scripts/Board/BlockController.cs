@@ -36,6 +36,8 @@ namespace PangPang.Board
 
                 arrowVector = ArrowCal(arrowVector);
 
+                if (!b1) return;
+
                 Vector2 check = new Vector2(b1.transform.position.x + (arrowVector.x * 1.3f), b1.transform.position.y + (arrowVector.y * 1.3f));
                 b2 = Physics2D.Raycast(check, Vector2.zero);
 
@@ -69,6 +71,9 @@ namespace PangPang.Board
             Block targetBlock = board.blocks[curBlock.myPos.y + -(int)swipeD.y, curBlock.myPos.x + (int)swipeD.x];
             Block baseBlock = board.blocks[curBlock.myPos.y, curBlock.myPos.x];
 
+            (int y, int x) baseXY = curBlock.myPos;
+            (int y, int x) targetXY = (curBlock.myPos.y + -(int)swipeD.y, curBlock.myPos.x + (int)swipeD.x);
+
             Vector2 targetPos = targetBlock.transform.position;
             Vector2 basePos = baseBlock.transform.position;
 
@@ -83,24 +88,23 @@ namespace PangPang.Board
 
             yield return new WaitForSeconds(AnimationLength.BLOCK_SWAP);
 
-            (int y, int x) baseXY = curBlock.myPos;
-            (int y, int x) targetXY = (curBlock.myPos.y + -(int)swipeD.y, curBlock.myPos.x + (int)swipeD.x);
-
-            board.blocks[targetXY.y, targetXY.x] = baseBlock;
-            board.blocks[baseXY.y, baseXY.x] = targetBlock;
+            board.SwapBlock(baseXY, targetXY);
 
             List<Block> matchedBlockList = new List<Block>();
 
-            board.blocks[baseXY.y, baseXY.x].myPos = baseXY;
-            board.blocks[targetXY.y, targetXY.x].myPos = targetXY;
+            //board.blocks[targetXY.y, targetXY.x] = baseBlock;
+            //board.blocks[baseXY.y, baseXY.x] = targetBlock;
+            //board.blocks[baseXY.y, baseXY.x].myPos = baseXY;
+            //board.blocks[targetXY.y, targetXY.x].myPos = targetXY;
 
             bool targetMatch = board.IsMatch_Part(board.blocks[baseXY.y, baseXY.x], matchedBlockList); 
             bool baseMatch = board.IsMatch_Part(board.blocks[targetXY.y, targetXY.x], matchedBlockList);
 
-            if (baseMatch || targetMatch || IsAroundBlockSwap(board.blocks[baseXY.y, baseXY.x], board.blocks[targetXY.y, targetXY.x]))
+            if (IsSpecialSwap(board.blocks[targetXY.y, targetXY.x], board.blocks[baseXY.y, baseXY.x]) || baseMatch || targetMatch)
             {
                 bool allMatch = true;
 
+                // "PANG"해야하는 블럭이 없을때까지 보드 체크
                 while(allMatch)
                 {
                     StartCoroutine(BlockDropAction());
@@ -110,17 +114,27 @@ namespace PangPang.Board
 
                 baseBlock.ChangeState(BlockState.IDLE);
                 targetBlock.ChangeState(BlockState.IDLE);
+
+                if (!board.AIMatch())
+                {
+                    board.InitBoard();
+                }
+
                 yield break;
             }
 
             StartCoroutine(BlockAction.MoveToAction(baseBlock, basePos, AnimationLength.BLOCK_SWAP));
             StartCoroutine(BlockAction.MoveToAction(targetBlock, targetPos, AnimationLength.BLOCK_SWAP));
 
-            board.blocks[baseXY.y, baseXY.x].myPos = targetXY;
-            board.blocks[targetXY.y, targetXY.x].myPos = baseXY;
+            yield return new WaitForSeconds(AnimationLength.BLOCK_SWAP);
 
-            board.blocks[targetXY.y, targetXY.x] = targetBlock;
-            board.blocks[baseXY.y, baseXY.x] = baseBlock;
+            board.SwapBlock(targetXY, baseXY);
+
+            //board.blocks[baseXY.y, baseXY.x].myPos = targetXY;
+            //board.blocks[targetXY.y, targetXY.x].myPos = baseXY;
+
+            //board.blocks[targetXY.y, targetXY.x] = targetBlock;
+            //board.blocks[baseXY.y, baseXY.x] = baseBlock;
 
             baseBlock.ChangeState(BlockState.IDLE);
             targetBlock.ChangeState(BlockState.IDLE);
@@ -128,30 +142,28 @@ namespace PangPang.Board
             yield break;
         }
 
+        // "PANG"을 한 이후 드롭을 하는 액션
         private IEnumerator BlockDropAction(/*HashSet<(int y, int x)> matches*/)
         {
             //특수 블럭들 먼저 처리
-            foreach (var block in board.blocks)
+            int blockMatchType = (int)MatchTypeMethod.MaxType();
+
+            while(blockMatchType > 3)
             {
-                if(block == null) continue;
-
-                if (block.match > MatchType.THREE && block.transform.position.Equals(block.specialMoveTarget))
+                foreach (var block in board.blocks)
                 {
-                    List<Block> specialBlockList = new List<Block>();
-                    board.CreateSpecialBlock(block.match, block, specialBlockList);
+                    if (block == null) continue;
 
-                    foreach (var specialBlock in specialBlockList)
+                    if ((MatchType)blockMatchType > MatchType.FIVE && block.match == (MatchType)blockMatchType)
                     {
-                        int sx = specialBlock.myPos.x;
-                        int sy = specialBlock.myPos.y;
-                        StartCoroutine(BlockAction.SpecialBlockAction(specialBlock, specialBlock.specialMoveTarget, AnimationLength.BLOCK_PANG));
-                        board.blocks[sy, sx].match = MatchType.NONE;
-                        board.blocks[sy, sx] = null;
+                        ProcessMatchBlock(block);
                     }
-                    block.UpdateBlockSkill();
-                    block.mySpr.color = Color.black;
-                    block.match = MatchType.NONE;
+                    else if ((MatchType)blockMatchType > MatchType.THREE && block.match == (MatchType)blockMatchType && block.transform.position.Equals(block.specialMoveTarget))
+                    {
+                        ProcessMatchBlock(block);
+                    }
                 }
+                blockMatchType--;
             }
 
             // 특수 블럭 처리 이후 일반 블럭 처리
@@ -164,7 +176,7 @@ namespace PangPang.Board
 
                 if (block.match.Equals(MatchType.THREE))
                 {
-                    BlockPangType(x, y);
+                    BlockPangType(x, y, null);
                 }
             }
 
@@ -182,70 +194,138 @@ namespace PangPang.Board
             }
         }
 
+        private bool IsExceptBlock(int x, int y, List<Block> exceptBlockList) // 현재 블럭이 예외 처리 블럭인지 확인
+        {
+            if (exceptBlockList == null) return false;
+            foreach(var exceptBlock in exceptBlockList)
+                if (exceptBlock.myPos.Equals((y, x))) return true;
+            return false;
+        }
+
+        private void ProcessMatchBlock(Block block)
+        {
+            if (block == null) return;
+
+            List<Block> specialBlockList = new List<Block>();
+
+            board.CreateSpecialBlock(block.match, block, specialBlockList);
+            List<Block> exceptBlockList = new List<Block>(specialBlockList)
+            {
+                block // 예외 블럭은 본인 자신도 포함시켜주기
+            };
+
+            foreach (var specialBlock in specialBlockList)
+            {
+                int sx = specialBlock.myPos.x;
+                int sy = specialBlock.myPos.y;
+                if (specialBlock.skill >= BlockSkill.LINE) BlockPangType(sx, sy, exceptBlockList);
+                StartCoroutine(BlockAction.SpecialBlockAction(specialBlock, specialBlock.specialMoveTarget, AnimationLength.BLOCK_PANG));
+                board.blocks[sy, sx].match = MatchType.NONE;
+                board.blocks[sy, sx] = null;
+            }
+            block.UpdateBlockSkill();
+            block.mySpr.color = Color.black;
+            block.match = MatchType.NONE;
+        }
+
+        // 위치에 있는 블록 "PANG"
         private void BlockPang(int x, int y)
         {
             if (board.blocks[y, x] == null) return;
+
             board.blocks[y, x].ChangeState(BlockState.PANG);
+            board.blocks[y, x].Explosion(x, y);
             StartCoroutine(BlockAction.BlockPangAction(board.blocks[y, x], 0.3f, 1.5f));
             board.blocks[y, x] = null;
         }
 
-        private void BlockPangType(int x, int y)
+        private void LinePang(int x, int y, List<Block> exceptBlockList) // 기준 블럭의 위치와 예외 블럭 리스트
+        {
+            // LINE 블럭 기점으로 가로 세로 줄 PANG
+            if (board.blocks[y, x] != null && !IsExceptBlock(x, y, exceptBlockList)) BlockPang(x, y);
+
+            for (int col = x + 1; col < board.boardMaxSize; col++)
+                if(!IsExceptBlock(col, y, exceptBlockList)) BlockPangType(col, y, exceptBlockList);
+            for (int col = x - 1; col >= 0; col--)
+                if (!IsExceptBlock(col, y, exceptBlockList)) BlockPangType(col, y, exceptBlockList);
+            for (int row = y + 1; row < board.boardMaxSize; row++)
+                if (!IsExceptBlock(x, row, exceptBlockList)) BlockPangType(x, row, exceptBlockList);
+            for (int row = y - 1; row >= 0; row--)
+                if (!IsExceptBlock(x, row, exceptBlockList)) BlockPangType(x, row, exceptBlockList);
+        }
+
+        private void AroundPang(int x, int y, int interval, List<Block> exceptBlockList)
+        {
+            // AROUND 블럭 기점으로 마름모 모양으로 PANG
+            int startX = x - interval;
+            int endX = x + interval;
+            int startY = y - interval;
+            int endY = y + interval;
+
+            if (board.blocks[y, x] != null && !IsExceptBlock(x, y, exceptBlockList)) BlockPang(x, y);
+
+            int count = interval;
+            for (int row = startY; row <= endY; row++)
+            {
+                if (row >= 0 && row < board.boardMaxSize)
+                {
+                    for (int col = startX + count; col <= endX - count; col++)
+                    {
+                        if (col < 0 || col >= board.boardMaxSize || (x == col && y == row) || IsExceptBlock(col, row, exceptBlockList)) continue;
+                        BlockPangType(col, row, exceptBlockList);
+                    }
+                }
+                if (row < startY + interval) count--;
+                else count++;
+            }
+        }
+
+        // 블록 스킬에 따른 "PANG" 범위
+        private void BlockPangType(int x, int y, List<Block> exceptBlockList)
         {
             if (board.blocks[y, x] == null) return;
 
             switch(board.blocks[y, x].skill)
             {
                 case BlockSkill.NONE:
+                    // 자기 자신만 PANG
                     BlockPang(x, y);
                     break;
                 case BlockSkill.LINE:
-                    for (int col = x; col < board.boardMaxSize; col++)
-                        BlockPang(col, y);
-                    for (int col = x - 1; col >= 0; col--)
-                        BlockPang(col, y);
-                    for (int row = y + 1; row < board.boardMaxSize; row++)
-                        BlockPang(x, row);
-                    for (int row = y - 1; row >= 0; row--)
-                        BlockPang(x, row);
+                    LinePang(x, y, exceptBlockList);
                     break;
                 case BlockSkill.AROUND:
-                    int startX = x - 2;
-                    int endX = x + 2;
-                    int startY = y - 2;
-                    int endY = y + 2;
-
-                    if (startX < 0) startX = 0;
-                    if (startY < 0) startY = 0;
-                    if (endX >= board.boardMaxSize) endX = board.boardMaxSize - 1;
-                    if (endY >= board.boardMaxSize) endY = board.boardMaxSize - 1;
-
-                    for(int row = startY; row <= endY; row++)
-                    {
-                        for(int col = startX; col <= endX; col++)
-                            BlockPang(col, row);
-                    }
-
+                    AroundPang(x, y, 2, exceptBlockList);
                     break;
             }
         }
 
-        private bool IsAroundBlockSwap(Block block1, Block block2)
+        private bool IsSpecialSwap(Block baseBlock, Block targetBlock)
         {
-            bool isAround = false;
+            bool isSpecialSwap = false;
 
-            if(block1.skill == BlockSkill.AROUND)
+            int type = (int)baseBlock.skill + (int)targetBlock.skill;
+            if(type == 5)
             {
-                isAround = true;
-                BlockPang(block1.myPos.x, block1.myPos.y);
+                BlockPangType(baseBlock.myPos.x, baseBlock.myPos.y, null);
+                BlockPangType(targetBlock.myPos.x, targetBlock.myPos.y, null);
+
+                isSpecialSwap = true;
             }
-            if(block2.skill == BlockSkill.AROUND)
+            else if(type == 8)
             {
-                isAround = true;
-                BlockPangType(block2.myPos.x, block2.myPos.y);
+                LinePang(baseBlock.myPos.x, baseBlock.myPos.y, null);
+                LinePang(targetBlock.myPos.x, targetBlock.myPos.y, null);
+
+                isSpecialSwap = true;
+            } 
+            else if (type == 10)
+            {
+                AroundPang(baseBlock.myPos.x, baseBlock.myPos.y, 3, null);
+                isSpecialSwap = true;
             }
 
-            return isAround;
+            return isSpecialSwap;
         }
 
         void Update()

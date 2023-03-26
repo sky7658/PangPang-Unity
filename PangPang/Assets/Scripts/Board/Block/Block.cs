@@ -13,6 +13,7 @@ namespace PangPang.Board
         public BlockState blockState;
         public Vector2 specialMoveTarget;
         public (int y, int x) myPos;
+        public string color;
         public int dropCount { get; set; }  // Drop È½¼ö
 
         public MatchType match;
@@ -63,6 +64,27 @@ namespace PangPang.Board
             myType = _type;
             mySpr.color = Color.white;
 
+            switch(_type)
+            {
+                case Block_Type.RED:
+                case Block_Type.Orange:
+                    color = "Blue";
+                    break;
+                case Block_Type.Yellow:
+                    color = "Green";
+                    break;
+                case Block_Type.Green:
+                case Block_Type.Blue:
+                    color = "Orange";
+                    break;
+                case Block_Type.Indigo:
+                    color = "Red";
+                    break;
+                case Block_Type.Purple:
+                    color = "Yellow";
+                    break;
+            }
+
 
             match = MatchType.NONE;
             UpdateBlockSkill();
@@ -72,6 +94,11 @@ namespace PangPang.Board
             this.dropCount = dropCount;
 
             transform.position = BaseInfo.SetBlockPos(_pos.y, _pos.x, dropCount);
+        }
+
+        public void Explosion(int x, int y)
+        {
+            PangPang.Particle.ExplosionPool.instance.GetObject(color).GetComponent<PangPang.Particle.Explosion>().Execute(x, y, color);
         }
     }
 }

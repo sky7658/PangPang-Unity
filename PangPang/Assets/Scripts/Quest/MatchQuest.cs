@@ -11,17 +11,22 @@ namespace PangPang.Quest
         FOUR = 4,
         FIVE = 5,
         THREE_THREE = 6,
-        THREE_FOUR = 7
+        THREE_FOUR = 7,
     }
 
     public static class MatchTypeMethod
     {
         public static MatchType Add(this MatchType curType, MatchType addType)
         {
-            int result = ((int)curType + (int)addType) - 1;
+            int result = ((int)curType + (int)addType);
 
             if (result >= 7) return MatchType.THREE_FOUR;
             return (MatchType)result;
+        }
+
+        public static MatchType MaxType()
+        {
+            return MatchType.THREE_FOUR;
         }
     }
 

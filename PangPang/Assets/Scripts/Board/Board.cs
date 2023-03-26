@@ -19,69 +19,55 @@ namespace PangPang.Board
         }
         public void InitBoard()
         {
-            do
-            {
-                BoardReturn();
-                BoardSetting();
-            } while (!AIMatch());
-            //BoardSetting();
+            //do
+            //{
+            //    BoardReturn();
+            //    BoardSetting();
+            //} while (!AIMatch());
+            BoardSetting();
         }
         private void BoardSetting()
         {
             //Test용 코드
-            //m_Blocks[2, 2] = BlockPool.instance.GetBlock(Block_Type.RED);
-            //m_Blocks[2, 2].InitBlock(Block_Type.RED, (2, 2), 0);
+            m_Blocks[0, 0] = BlockPool.instance.GetBlock(Block_Type.RED);
+            m_Blocks[0, 0].InitBlock(Block_Type.RED, (0, 0), 0);
+            m_Blocks[0, 0].skill = BlockSkill.LINE;
 
-            //m_Blocks[3, 2] = BlockPool.instance.GetBlock(Block_Type.RED);
-            //m_Blocks[3, 2].InitBlock(Block_Type.RED, (3, 2), 0);
+            m_Blocks[1, 1] = BlockPool.instance.GetBlock(Block_Type.RED);
+            m_Blocks[1, 1].InitBlock(Block_Type.RED, (1, 1), 0);
 
-            //m_Blocks[4, 3] = BlockPool.instance.GetBlock(Block_Type.RED);
-            //m_Blocks[4, 3].InitBlock(Block_Type.RED, (4, 3), 0);
+            m_Blocks[0, 2] = BlockPool.instance.GetBlock(Block_Type.RED);
+            m_Blocks[0, 2].InitBlock(Block_Type.RED, (0, 2), 0);
 
-            //m_Blocks[4, 1] = BlockPool.instance.GetBlock(Block_Type.RED);
-            //m_Blocks[4, 1].InitBlock(Block_Type.RED, (4, 1), 0);
+            m_Blocks[0, 3] = BlockPool.instance.GetBlock(Block_Type.RED);
+            m_Blocks[0, 3].InitBlock(Block_Type.RED, (0, 3), 0);
 
-            //m_Blocks[5, 2] = BlockPool.instance.GetBlock(Block_Type.RED);
-            //m_Blocks[5, 2].InitBlock(Block_Type.RED, (5, 2), 0);
-
-            // Test 용 코드
-            //m_Blocks[0, 0] = BlockPool.instance.GetBlock(Block_Type.RED);
-            //m_Blocks[0, 0].InitBlock(Block_Type.RED, (0, 0), 0);
-
-            //m_Blocks[0, 2] = BlockPool.instance.GetBlock(Block_Type.RED);
-            //m_Blocks[0, 2].InitBlock(Block_Type.RED, (0, 2), 0);
-
-            //m_Blocks[0, 3] = BlockPool.instance.GetBlock(Block_Type.RED);
-            //m_Blocks[0, 3].InitBlock(Block_Type.RED, (0, 3), 0);
-
-            //m_Blocks[0, 1] = BlockPool.instance.GetBlock(Block_Type.Orange);
-            //m_Blocks[0, 1].InitBlock(Block_Type.Orange, (0, 1), 0);
-
-            //m_Blocks[1, 0] = BlockPool.instance.GetBlock(Block_Type.Orange);
-            //m_Blocks[1, 0].InitBlock(Block_Type.Orange, (1, 0), 0);
-
-            //m_Blocks[2, 0] = BlockPool.instance.GetBlock(Block_Type.Orange);
-            //m_Blocks[2, 0].InitBlock(Block_Type.Orange, (2, 0), 0);
 
             for (int y = 0; y < boardMaxSize; y++)
             {
                 for (int x = 0; x < boardMaxSize; x++)
                 {
-                    //if (m_Blocks[y, x] != null) continue; // Test 용 코드
+                    if (m_Blocks[y, x] != null) continue; // Test 용 코드
                     int block_type = UnityEngine.Random.Range(0, boardMaxSize);
                     m_Blocks[y, x] = BlockPool.instance.GetBlock((Block_Type)block_type);
                     m_Blocks[y, x].InitBlock((Block_Type)block_type, (y, x), 0);
                 }
             }
         }
-        private void BoardReturn()
+        public void BoardReturn()
         {
-            if (m_Blocks[0, 0] == null) return;
+            if (m_Blocks[0, 0] == null)
+            {
+                return;
+            }
 
             for (int y = 0; y < boardMaxSize; y++)
             {
                 for (int x = 0; x < boardMaxSize; x++)
+                {
                     BlockPool.instance.ReturnBlock(m_Blocks[y, x]);
+                    m_Blocks[y, x] = null;
+                }
             }
         }
         private bool EscapeRange(int posX, int posY)
@@ -91,10 +77,10 @@ namespace PangPang.Board
         }
 
         // 현재 보드에서 매치가 가능한 블럭이 있는지 확인한다.
-        private bool AIMatch()
+        public bool AIMatch()
         {
             // 기존 보드 복사
-            Block[,] copy_blocks = (Block[,])m_Blocks.Clone();
+            //Block[,] copy_blocks = (Block[,])m_Blocks.Clone();
 
             if (IsMatch_All().Count > 0) return false;   // 이미 매치된 블럭이 있다면 재 구성
 
@@ -105,24 +91,22 @@ namespace PangPang.Board
                     for (int i = 0; i < 4; i++)
                     {
                         // 기존 블럭 다시 넣기
-                        m_Blocks = (Block[,])copy_blocks.Clone();
+                        //m_Blocks = (Block[,])copy_blocks.Clone();
 
                         int _x = x + directionX[i];
                         int _y = y + directionY[i];
 
                         if (EscapeRange(_x, _y)) continue;
 
-                        Block baseBlock = m_Blocks[y, x];
-                        Block targetBlock = m_Blocks[_y, _x];
-
-                        m_Blocks[y, x] = targetBlock;
-                        m_Blocks[_y, _x] = baseBlock;
+                        SwapBlock((y, x), (_y, _x));
 
                         if (IsMatch_All().Count > 0) // 게임이 가능한 상황이면 기존 블록을 다시 넣어 결과값 리턴
                         {
-                            m_Blocks = (Block[,])copy_blocks.Clone();
+                            SwapBlock((_y, _x), (y, x));
                             return true;
                         }
+
+                        SwapBlock((_y, _x), (y, x));
                     }
                 }
             }
@@ -133,7 +117,7 @@ namespace PangPang.Board
         public bool IsMatch_Part(Block baseBlock, List<Block> matchedBlockList)
         {
             bool bFound = false;
-            if (baseBlock.match != MatchType.NONE) return false;
+            if (baseBlock == null || baseBlock.match != MatchType.NONE) return false;
 
             matchedBlockList.Add(baseBlock);
 
@@ -255,7 +239,19 @@ namespace PangPang.Board
         private void SetMatchBlock(List<Block> matchedBlock, UnityEngine.Vector2 moveTarget)
         {
             matchedBlock.ForEach(block => block.UpdateMatchType((MatchType)matchedBlock.Count));
-            matchedBlock.ForEach(block => block.UpdateMoveTarget(moveTarget));
+            matchedBlock.ForEach(block => block.UpdateMoveTarget(moveTarget));  // 기준 블럭이 문제
+        }
+
+        public void SwapBlock((int y, int x)p1, (int y, int x)p2)
+        {
+            Block baseBlock = m_Blocks[p1.y, p1.x];
+            Block targetBlock = m_Blocks[p2.y, p2.x];
+
+            m_Blocks[p1.y, p1.x] = targetBlock;
+            m_Blocks[p2.y, p2.x] = baseBlock;
+
+            m_Blocks[p1.y, p1.x].myPos = p1;
+            m_Blocks[p2.y, p2.x].myPos = p2;
         }
 
         public void DownBlock()
@@ -310,7 +306,7 @@ namespace PangPang.Board
                     int x = block.myPos.x + directionX[index];
                     int y = block.myPos.y + directionY[index];
 
-                    if (EscapeRange(x, y)) continue; // 범위를 벗어나면
+                    if (EscapeRange(x, y) || m_Blocks[y, x] == null) continue; // 범위를 벗어나면
                     if (visit[y, x] || !standardBlock.myType.Equals(m_Blocks[y, x].myType) || m_Blocks[y, x].match == MatchType.NONE) continue; // 이미 방문한 블럭이면
 
                     // 매치 타입에 따른 애니메이션 수행
@@ -319,6 +315,9 @@ namespace PangPang.Board
                     visit[y, x] = true;
                 }
             }
+
+            if (matchType > MatchType.FIVE) specialBlockList.ForEach(block => block.UpdateMoveTarget(standardBlock.transform.position));
         }
     }
+
 }
