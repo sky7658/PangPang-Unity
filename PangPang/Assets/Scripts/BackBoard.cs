@@ -15,6 +15,7 @@ public class BackBoard : MonoBehaviour
             {
                 var back = Instantiate(prefab);
                 back.transform.position = new Vector2((interval / 3 * j) - interval, (-i * interval / 3) + interval);
+                back.transform.parent = this.transform;
             }
         }
         

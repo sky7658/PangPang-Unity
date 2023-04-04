@@ -9,45 +9,54 @@ namespace PangPang.Board
         int[] directionX = { 0, 1, 0, -1 };
         int[] directionY = { 1, 0, -1, 0 };
         public int boardMaxSize { get; private set; }
-        Block[,] m_Blocks;
+
+        private Block[,] m_Blocks;
         public Block[,] blocks { get { return m_Blocks; } }
+        public Block[] hintBlock;
 
         public Board()
         {
             boardMaxSize = 7;
             m_Blocks = new Block[boardMaxSize, boardMaxSize];
+            hintBlock = new Block[2];
         }
         public void InitBoard()
         {
-            //do
+            //while(true)
             //{
-            //    BoardReturn();
             //    BoardSetting();
-            //} while (!AIMatch());
-            BoardSetting();
+            //    if (AIMatch()) break;
+            //    BoardReturn();
+            //}
+            do
+            {
+                BoardReturn();
+                BoardSetting();
+            } while (!AIMatch());
+            //BoardSetting();
         }
         private void BoardSetting()
         {
             //Test용 코드
-            m_Blocks[0, 0] = BlockPool.instance.GetBlock(Block_Type.RED);
-            m_Blocks[0, 0].InitBlock(Block_Type.RED, (0, 0), 0);
-            m_Blocks[0, 0].skill = BlockSkill.LINE;
+            //m_Blocks[0, 0] = BlockPool.instance.GetBlock(Block_Type.RED);
+            //m_Blocks[0, 0].InitBlock(Block_Type.RED, (0, 0), 0);
+            //m_Blocks[0, 0].skill = BlockSkill.LINE;
 
-            m_Blocks[1, 1] = BlockPool.instance.GetBlock(Block_Type.RED);
-            m_Blocks[1, 1].InitBlock(Block_Type.RED, (1, 1), 0);
+            //m_Blocks[1, 1] = BlockPool.instance.GetBlock(Block_Type.RED);
+            //m_Blocks[1, 1].InitBlock(Block_Type.RED, (1, 1), 0);
 
-            m_Blocks[0, 2] = BlockPool.instance.GetBlock(Block_Type.RED);
-            m_Blocks[0, 2].InitBlock(Block_Type.RED, (0, 2), 0);
+            //m_Blocks[0, 2] = BlockPool.instance.GetBlock(Block_Type.RED);
+            //m_Blocks[0, 2].InitBlock(Block_Type.RED, (0, 2), 0);
 
-            m_Blocks[0, 3] = BlockPool.instance.GetBlock(Block_Type.RED);
-            m_Blocks[0, 3].InitBlock(Block_Type.RED, (0, 3), 0);
+            //m_Blocks[0, 3] = BlockPool.instance.GetBlock(Block_Type.RED);
+            //m_Blocks[0, 3].InitBlock(Block_Type.RED, (0, 3), 0);
 
 
             for (int y = 0; y < boardMaxSize; y++)
             {
                 for (int x = 0; x < boardMaxSize; x++)
                 {
-                    if (m_Blocks[y, x] != null) continue; // Test 용 코드
+                    //if (m_Blocks[y, x] != null) continue; // Test 용 코드
                     int block_type = UnityEngine.Random.Range(0, boardMaxSize);
                     m_Blocks[y, x] = BlockPool.instance.GetBlock((Block_Type)block_type);
                     m_Blocks[y, x].InitBlock((Block_Type)block_type, (y, x), 0);
@@ -79,10 +88,9 @@ namespace PangPang.Board
         // 현재 보드에서 매치가 가능한 블럭이 있는지 확인한다.
         public bool AIMatch()
         {
-            // 기존 보드 복사
-            //Block[,] copy_blocks = (Block[,])m_Blocks.Clone();
+            List<Block> list = new List<Block>();
 
-            if (IsMatch_All().Count > 0) return false;   // 이미 매치된 블럭이 있다면 재 구성
+            if (IsMatch_All()) return false;   // 이미 매치된 블럭이 있다면 재 구성
 
             for (int y = 0; y < boardMaxSize; y++)
             {
@@ -90,9 +98,6 @@ namespace PangPang.Board
                 {
                     for (int i = 0; i < 4; i++)
                     {
-                        // 기존 블럭 다시 넣기
-                        //m_Blocks = (Block[,])copy_blocks.Clone();
-
                         int _x = x + directionX[i];
                         int _y = y + directionY[i];
 
@@ -100,9 +105,21 @@ namespace PangPang.Board
 
                         SwapBlock((y, x), (_y, _x));
 
-                        if (IsMatch_All().Count > 0) // 게임이 가능한 상황이면 기존 블록을 다시 넣어 결과값 리턴
+                        if (IsSpecialSwap((int)m_Blocks[y, x].skill + (int)m_Blocks[_y, _x].skill) || IsMatch_Part(m_Blocks[_y, _x], list)) // 게임이 가능한 상황
                         {
                             SwapBlock((_y, _x), (y, x));
+                            SetMatchBlockReset();   // 매치 확인을 하여 바꿔주었던 값을 초기값으로 바꾸기
+                            for(int j = 0; j < boardMaxSize; j++)
+                            {
+                                for (int k = 0; k < boardMaxSize; k++)
+                                {
+                                    m_Blocks[j, k].transform.position = BaseInfo.SetBlockPos(j, k, 0);
+                                }
+                            }
+
+                            hintBlock[0] = m_Blocks[y, x];
+                            hintBlock[1] = m_Blocks[_y, _x];
+
                             return true;
                         }
 
@@ -111,7 +128,7 @@ namespace PangPang.Board
                 }
             }
 
-            return false;
+            return false;   // 게임이 불가능한 상황
         }
 
         public bool IsMatch_Part(Block baseBlock, List<Block> matchedBlockList)
@@ -167,7 +184,7 @@ namespace PangPang.Board
             return bFound;
         }
 
-        public bool IsMatch_All_()
+        public bool IsMatch_All()
         {
             int count = 0;
             List<Block> matchedBlocks = new List<Block>();
@@ -183,59 +200,11 @@ namespace PangPang.Board
             return count > 0;
         }
 
-        // 전체 블럭 중 매치가 되어있는 블럭들을 반환해준다.
-        public HashSet<(int, int)> IsMatch_All()
+        private void SetMatchBlockReset()
         {
-            HashSet<(int y, int x)> matches = new HashSet<(int y, int x)>();
-
-            for (int y = 0; y < boardMaxSize; y++)
-            {
-                int blockCountRow = 1;
-                int blockCountCol = 1;
-                for (int x = 1; x < boardMaxSize; x++)
-                {
-                    if (m_Blocks[y, x].myType == m_Blocks[y, x - 1].myType) blockCountRow++;
-                    else
-                    {
-                        if (blockCountRow >= 3)
-                        {
-                            for (int index = x - blockCountRow; index < x; index++)
-                                matches.Add((y, index));
-                        }
-                        blockCountRow = 1;
-                    }
-
-                    // 열 탐색
-                    if (m_Blocks[x, y].myType == m_Blocks[x - 1, y].myType) blockCountCol++;
-                    else
-                    {
-                        if (blockCountCol >= 3)
-                        {
-                            for (int index = x - blockCountCol; index < x; index++)
-                                matches.Add((index, y));
-                        }
-                        blockCountCol = 1;
-                    }
-
-                    // 행과 열
-                    if (x == boardMaxSize - 1)
-                    {
-                        if (blockCountRow >= 3)
-                        {
-                            for (int index = x - blockCountRow + 1; index <= x; index++)
-                                matches.Add((y, index));
-                        }
-                        if (blockCountCol >= 3)
-                        {
-                            for (int index = x - blockCountCol + 1; index <= x; index++)
-                                matches.Add((index, y));
-                        }
-                    }
-                }
-            }
-            return matches;
+            foreach (var block in m_Blocks)
+                block.match = MatchType.NONE;
         }
-
         private void SetMatchBlock(List<Block> matchedBlock, UnityEngine.Vector2 moveTarget)
         {
             matchedBlock.ForEach(block => block.UpdateMatchType((MatchType)matchedBlock.Count));
@@ -285,7 +254,7 @@ namespace PangPang.Board
             }
         }
 
-        public void CreateSpecialBlock(MatchType matchType, Block standardBlock, List<Block> specialBlockList)
+        public void ComposeMatchBlock(MatchType matchType, Block standardBlock, List<Block> blockList)
         {
             Queue<Block> blocksQueue = new Queue<Block>();
             bool[,] visit = new bool[boardMaxSize, boardMaxSize];
@@ -310,14 +279,19 @@ namespace PangPang.Board
                     if (visit[y, x] || !standardBlock.myType.Equals(m_Blocks[y, x].myType) || m_Blocks[y, x].match == MatchType.NONE) continue; // 이미 방문한 블럭이면
 
                     // 매치 타입에 따른 애니메이션 수행
-                    specialBlockList.Add(m_Blocks[y, x]);
+                    blockList.Add(m_Blocks[y, x]);
                     blocksQueue.Enqueue(m_Blocks[y, x]);
                     visit[y, x] = true;
                 }
             }
 
-            if (matchType > MatchType.FIVE) specialBlockList.ForEach(block => block.UpdateMoveTarget(standardBlock.transform.position));
+            if (matchType > MatchType.FIVE) blockList.ForEach(block => block.UpdateMoveTarget(standardBlock.transform.position));
+        }
+
+        public bool IsSpecialSwap(int skillType)
+        {
+            if (skillType >= 5) return true;
+            return false;
         }
     }
-
 }

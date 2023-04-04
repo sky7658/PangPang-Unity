@@ -57,5 +57,34 @@ namespace PangPang.Action
 
             yield break;
         }
+
+        public static IEnumerator FadeInOutAction(SpriteRenderer spr, float duration)
+        {
+            float elapsed = duration;
+
+            while(true)
+            {
+                // Fade Out
+                while (elapsed > 0f)
+                {
+                    elapsed -= Time.smoothDeltaTime;
+                    spr.color = new Color(spr.color.r, spr.color.g, spr.color.b, elapsed / duration);
+                    yield return null;
+                }
+
+                elapsed = 0.0f;
+
+                // Fade In
+                while (elapsed < duration)
+                {
+                    elapsed += Time.smoothDeltaTime;
+                    spr.color = new Color(spr.color.r, spr.color.g, spr.color.b, elapsed / duration);
+                    yield return null;
+                }
+            }
+
+            spr.color = new Color(spr.color.r, spr.color.g, spr.color.b, 1f);
+            yield break;
+        }
     }
 }

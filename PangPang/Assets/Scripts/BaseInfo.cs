@@ -12,6 +12,7 @@ public static class AnimationLength
 public static class BaseInfo
 {
     private static float interval = 3.9f;
+    public static int baseScore = 100;
 
     public static Vector2 SetBlockPos(int y, int x, int dropCount)
     {

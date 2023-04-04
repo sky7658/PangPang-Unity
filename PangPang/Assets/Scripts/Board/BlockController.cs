@@ -9,10 +9,16 @@ namespace PangPang.Board
     public class BlockController : MonoBehaviour
     {
         Board board;
+        Score score;
+        Utils.InputManager m_Input;
+        public Score getScoreInfo { get { return score; } }
 
         void Start()
         {
             board = new Board();
+            score = new Score();
+            m_Input = new Utils.InputManager();
+
             board.InitBoard();
         }
 
@@ -20,7 +26,7 @@ namespace PangPang.Board
         private RaycastHit2D b1, b2;
         void MouseDrag()
         {
-            if (Input.GetMouseButtonDown(0))
+            if (m_Input.isTouchDown)
             {
                 arrowVector = Vector2.zero;
 
@@ -29,7 +35,7 @@ namespace PangPang.Board
 
                 b1 = Physics2D.Raycast(mousePos, transform.forward);
             }
-            if (Input.GetMouseButtonUp(0))
+            if (m_Input.isTouchUp)
             {
                 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
                 arrowVector += mousePos;
@@ -47,6 +53,7 @@ namespace PangPang.Board
                 }
             }
         }
+
         private Vector2 ArrowCal(Vector2 vc)
         {
             Vector2 newVc = Vector2.zero;
@@ -92,25 +99,18 @@ namespace PangPang.Board
 
             List<Block> matchedBlockList = new List<Block>();
 
-            //board.blocks[targetXY.y, targetXY.x] = baseBlock;
-            //board.blocks[baseXY.y, baseXY.x] = targetBlock;
-            //board.blocks[baseXY.y, baseXY.x].myPos = baseXY;
-            //board.blocks[targetXY.y, targetXY.x].myPos = targetXY;
-
             bool targetMatch = board.IsMatch_Part(board.blocks[baseXY.y, baseXY.x], matchedBlockList); 
             bool baseMatch = board.IsMatch_Part(board.blocks[targetXY.y, targetXY.x], matchedBlockList);
 
-            if (IsSpecialSwap(board.blocks[targetXY.y, targetXY.x], board.blocks[baseXY.y, baseXY.x]) || baseMatch || targetMatch)
+            if (SpecialSwap(board.blocks[targetXY.y, targetXY.x], board.blocks[baseXY.y, baseXY.x]) || baseMatch || targetMatch)
             {
-                bool allMatch = true;
-
+                time = 0f;
                 // "PANG"해야하는 블럭이 없을때까지 보드 체크
-                while(allMatch)
+                do
                 {
                     StartCoroutine(BlockDropAction());
                     yield return new WaitForSeconds(AnimationLength.BLOCK_DROP + AnimationLength.BLOCK_PANG);
-                    allMatch = board.IsMatch_All_();
-                }
+                } while (board.IsMatch_All());
 
                 baseBlock.ChangeState(BlockState.IDLE);
                 targetBlock.ChangeState(BlockState.IDLE);
@@ -129,12 +129,6 @@ namespace PangPang.Board
             yield return new WaitForSeconds(AnimationLength.BLOCK_SWAP);
 
             board.SwapBlock(targetXY, baseXY);
-
-            //board.blocks[baseXY.y, baseXY.x].myPos = targetXY;
-            //board.blocks[targetXY.y, targetXY.x].myPos = baseXY;
-
-            //board.blocks[targetXY.y, targetXY.x] = targetBlock;
-            //board.blocks[baseXY.y, baseXY.x] = baseBlock;
 
             baseBlock.ChangeState(BlockState.IDLE);
             targetBlock.ChangeState(BlockState.IDLE);
@@ -174,9 +168,20 @@ namespace PangPang.Board
                 int x = block.myPos.x;
                 int y = block.myPos.y;
 
+                List<Block> blockList = new List<Block>()
+                {
+                    block
+                };
+
                 if (block.match.Equals(MatchType.THREE))
                 {
-                    BlockPangType(x, y, null);
+                    score.ComboUpdate();
+                    board.ComposeMatchBlock(block.match, block, blockList);
+                    foreach(var matchBlock in blockList)
+                    {
+                        BlockPangType(matchBlock.myPos.x, matchBlock.myPos.y, null);
+                    }
+                    // 콤보 업데이트
                 }
             }
 
@@ -194,21 +199,17 @@ namespace PangPang.Board
             }
         }
 
-        private bool IsExceptBlock(int x, int y, List<Block> exceptBlockList) // 현재 블럭이 예외 처리 블럭인지 확인
-        {
-            if (exceptBlockList == null) return false;
-            foreach(var exceptBlock in exceptBlockList)
-                if (exceptBlock.myPos.Equals((y, x))) return true;
-            return false;
-        }
-
         private void ProcessMatchBlock(Block block)
         {
             if (block == null) return;
 
             List<Block> specialBlockList = new List<Block>();
 
-            board.CreateSpecialBlock(block.match, block, specialBlockList);
+            board.ComposeMatchBlock(block.match, block, specialBlockList);
+
+            // 콤보 업데이트
+            score.ComboUpdate();
+
             List<Block> exceptBlockList = new List<Block>(specialBlockList)
             {
                 block // 예외 블럭은 본인 자신도 포함시켜주기
@@ -216,6 +217,8 @@ namespace PangPang.Board
 
             foreach (var specialBlock in specialBlockList)
             {
+                score.ScoreUpdate(BaseInfo.baseScore);
+
                 int sx = specialBlock.myPos.x;
                 int sy = specialBlock.myPos.y;
                 if (specialBlock.skill >= BlockSkill.LINE) BlockPangType(sx, sy, exceptBlockList);
@@ -223,15 +226,27 @@ namespace PangPang.Board
                 board.blocks[sy, sx].match = MatchType.NONE;
                 board.blocks[sy, sx] = null;
             }
+
+            score.ScoreUpdate(BaseInfo.baseScore);
             block.UpdateBlockSkill();
             block.mySpr.color = Color.black;
             block.match = MatchType.NONE;
+        }
+
+        private bool IsExceptBlock(int x, int y, List<Block> exceptBlockList) // 현재 블럭이 예외 처리 블럭인지 확인
+        {
+            if (exceptBlockList == null) return false;
+            foreach (var exceptBlock in exceptBlockList)
+                if (exceptBlock.myPos.Equals((y, x))) return true;
+            return false;
         }
 
         // 위치에 있는 블록 "PANG"
         private void BlockPang(int x, int y)
         {
             if (board.blocks[y, x] == null) return;
+
+            score.ScoreUpdate(BaseInfo.baseScore);
 
             board.blocks[y, x].ChangeState(BlockState.PANG);
             board.blocks[y, x].Explosion(x, y);
@@ -245,7 +260,7 @@ namespace PangPang.Board
             if (board.blocks[y, x] != null && !IsExceptBlock(x, y, exceptBlockList)) BlockPang(x, y);
 
             for (int col = x + 1; col < board.boardMaxSize; col++)
-                if(!IsExceptBlock(col, y, exceptBlockList)) BlockPangType(col, y, exceptBlockList);
+                if (!IsExceptBlock(col, y, exceptBlockList)) BlockPangType(col, y, exceptBlockList);
             for (int col = x - 1; col >= 0; col--)
                 if (!IsExceptBlock(col, y, exceptBlockList)) BlockPangType(col, y, exceptBlockList);
             for (int row = y + 1; row < board.boardMaxSize; row++)
@@ -285,7 +300,7 @@ namespace PangPang.Board
         {
             if (board.blocks[y, x] == null) return;
 
-            switch(board.blocks[y, x].skill)
+            switch (board.blocks[y, x].skill)
             {
                 case BlockSkill.NONE:
                     // 자기 자신만 PANG
@@ -300,37 +315,39 @@ namespace PangPang.Board
             }
         }
 
-        private bool IsSpecialSwap(Block baseBlock, Block targetBlock)
+        private bool SpecialSwap(Block baseBlock, Block targetBlock)
         {
-            bool isSpecialSwap = false;
-
             int type = (int)baseBlock.skill + (int)targetBlock.skill;
-            if(type == 5)
+
+            if (!board.IsSpecialSwap(type)) return false;
+
+            // 콤보 업데이트
+            score.ComboUpdate();
+
+            if (type == 5)
             {
                 BlockPangType(baseBlock.myPos.x, baseBlock.myPos.y, null);
                 BlockPangType(targetBlock.myPos.x, targetBlock.myPos.y, null);
-
-                isSpecialSwap = true;
             }
-            else if(type == 8)
+            else if (type == 8)
             {
                 LinePang(baseBlock.myPos.x, baseBlock.myPos.y, null);
                 LinePang(targetBlock.myPos.x, targetBlock.myPos.y, null);
-
-                isSpecialSwap = true;
-            } 
+            }
             else if (type == 10)
             {
                 AroundPang(baseBlock.myPos.x, baseBlock.myPos.y, 3, null);
-                isSpecialSwap = true;
             }
 
-            return isSpecialSwap;
+            return true;
         }
 
+        float time = 0f;
         void Update()
         {
             MouseDrag();
+            time += Time.deltaTime;
+            score.ResetCombo(time);
         }
     }
 }

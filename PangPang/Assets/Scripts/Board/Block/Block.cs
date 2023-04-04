@@ -90,9 +90,8 @@ namespace PangPang.Board
             UpdateBlockSkill();
             ChangeState(BlockState.IDLE);
 
-            this.transform.localScale = new Vector3(1, 1, 1);
             this.dropCount = dropCount;
-
+            transform.localScale = new Vector3(1, 1, 1);
             transform.position = BaseInfo.SetBlockPos(_pos.y, _pos.x, dropCount);
         }
 
