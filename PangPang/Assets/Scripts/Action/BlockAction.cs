@@ -58,15 +58,20 @@ namespace PangPang.Action
             yield break;
         }
 
-        public static IEnumerator FadeInOutAction(SpriteRenderer spr, float duration)
+        public static IEnumerator FadeInOutAction(Block hintBlock, float duration)
         {
             float elapsed = duration;
+            SpriteRenderer spr = hintBlock.mySpr;
 
-            while(true)
+            while (hintBlock.isHintBlock)
             {
                 // Fade Out
                 while (elapsed > 0f)
                 {
+                    if(!hintBlock.isHintBlock)
+                    {
+                        break;
+                    }
                     elapsed -= Time.smoothDeltaTime;
                     spr.color = new Color(spr.color.r, spr.color.g, spr.color.b, elapsed / duration);
                     yield return null;
@@ -77,6 +82,10 @@ namespace PangPang.Action
                 // Fade In
                 while (elapsed < duration)
                 {
+                    if (!hintBlock.isHintBlock)
+                    {
+                        break;
+                    }
                     elapsed += Time.smoothDeltaTime;
                     spr.color = new Color(spr.color.r, spr.color.g, spr.color.b, elapsed / duration);
                     yield return null;

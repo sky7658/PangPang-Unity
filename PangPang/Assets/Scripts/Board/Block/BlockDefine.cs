@@ -21,9 +21,6 @@ namespace PangPang.Board
         NONE,
         LINE = 4,
         AROUND = 5,
-        //LINE_LINE = 8,
-        //LINE_AROUND = 9,
-        //AROUND_AROUND = 10
     }
 
     public enum BlockState { IDLE, SWAP, DROP, PANG }

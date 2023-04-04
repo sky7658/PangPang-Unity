@@ -8,9 +8,7 @@ namespace PangPang.Stage
     public class StageManager : MonoBehaviour
     {
         public float endtimer;
-        float timer;
 
-        //
         [SerializeField] private Image timerImage;
         private Image timerBar;
 
@@ -22,8 +20,8 @@ namespace PangPang.Stage
 
         void Update()
         {
-            timer += Time.smoothDeltaTime;
-            timerBar.fillAmount = (endtimer - timer) / endtimer;
+            BaseInfo.gameTime += Time.smoothDeltaTime;
+            timerBar.fillAmount = (endtimer - BaseInfo.gameTime) / endtimer;
         }
     }
 

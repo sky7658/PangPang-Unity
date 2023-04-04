@@ -14,9 +14,21 @@ namespace PangPang.Board
         public Vector2 specialMoveTarget;
         public (int y, int x) myPos;
         public string color;
+
         public int dropCount { get; set; }  // Drop È½¼ö
 
         public MatchType match;
+
+        public bool isHintBlock { get; private set; }
+        public void StartHintAction()
+        {
+            isHintBlock = true;
+            StartCoroutine(Action.BlockAction.FadeInOutAction(this, 1f));
+        }
+        public void StopHintAction()
+        {
+            isHintBlock = false;
+        }
 
         private void Awake()
         {
@@ -63,8 +75,9 @@ namespace PangPang.Board
             myPos = _pos;
             myType = _type;
             mySpr.color = Color.white;
+            isHintBlock = false;
 
-            switch(_type)
+            switch (_type)
             {
                 case Block_Type.RED:
                 case Block_Type.Orange:

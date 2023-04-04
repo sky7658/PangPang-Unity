@@ -10,6 +10,7 @@ namespace PangPang.Board
     {
         Board board;
         Score score;
+        Hint hint;
         Utils.InputManager m_Input;
         public Score getScoreInfo { get { return score; } }
 
@@ -17,6 +18,7 @@ namespace PangPang.Board
         {
             board = new Board();
             score = new Score();
+            hint = new Hint();
             m_Input = new Utils.InputManager();
 
             board.InitBoard();
@@ -104,7 +106,10 @@ namespace PangPang.Board
 
             if (SpecialSwap(board.blocks[targetXY.y, targetXY.x], board.blocks[baseXY.y, baseXY.x]) || baseMatch || targetMatch)
             {
-                time = 0f;
+                if (hint.isHintTurnOn)
+                {
+                    ActiveHint(false);
+                }
                 // "PANG"해야하는 블럭이 없을때까지 보드 체크
                 do
                 {
@@ -119,6 +124,8 @@ namespace PangPang.Board
                 {
                     board.InitBoard();
                 }
+
+                hint.ResetHintInfo();
 
                 yield break;
             }
@@ -342,12 +349,27 @@ namespace PangPang.Board
             return true;
         }
 
-        float time = 0f;
+        private void ActiveHint(bool turn)
+        {
+            if (turn)
+            {
+                board.hintBlock[0].StartHintAction();
+                board.hintBlock[1].StartHintAction();
+            }
+            else
+            {
+                board.hintBlock[0].StopHintAction();
+                board.hintBlock[1].StopHintAction();
+            }
+        }
+
         void Update()
         {
             MouseDrag();
-            time += Time.deltaTime;
-            score.ResetCombo(time);
+
+            if (hint.IsHint()) ActiveHint(true);
+
+            score.ResetCombo();
         }
     }
 }

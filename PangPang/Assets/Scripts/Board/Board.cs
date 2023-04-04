@@ -22,41 +22,18 @@ namespace PangPang.Board
         }
         public void InitBoard()
         {
-            //while(true)
-            //{
-            //    BoardSetting();
-            //    if (AIMatch()) break;
-            //    BoardReturn();
-            //}
             do
             {
                 BoardReturn();
                 BoardSetting();
             } while (!AIMatch());
-            //BoardSetting();
         }
         private void BoardSetting()
         {
-            //Test용 코드
-            //m_Blocks[0, 0] = BlockPool.instance.GetBlock(Block_Type.RED);
-            //m_Blocks[0, 0].InitBlock(Block_Type.RED, (0, 0), 0);
-            //m_Blocks[0, 0].skill = BlockSkill.LINE;
-
-            //m_Blocks[1, 1] = BlockPool.instance.GetBlock(Block_Type.RED);
-            //m_Blocks[1, 1].InitBlock(Block_Type.RED, (1, 1), 0);
-
-            //m_Blocks[0, 2] = BlockPool.instance.GetBlock(Block_Type.RED);
-            //m_Blocks[0, 2].InitBlock(Block_Type.RED, (0, 2), 0);
-
-            //m_Blocks[0, 3] = BlockPool.instance.GetBlock(Block_Type.RED);
-            //m_Blocks[0, 3].InitBlock(Block_Type.RED, (0, 3), 0);
-
-
             for (int y = 0; y < boardMaxSize; y++)
             {
                 for (int x = 0; x < boardMaxSize; x++)
                 {
-                    //if (m_Blocks[y, x] != null) continue; // Test 용 코드
                     int block_type = UnityEngine.Random.Range(0, boardMaxSize);
                     m_Blocks[y, x] = BlockPool.instance.GetBlock((Block_Type)block_type);
                     m_Blocks[y, x].InitBlock((Block_Type)block_type, (y, x), 0);

@@ -12,7 +12,13 @@ public static class AnimationLength
 public static class BaseInfo
 {
     private static float interval = 3.9f;
+
     public static int baseScore = 100;
+
+    public static float activeHintTime = 5f;
+    public static float comboResetTime = 3f;
+
+    public static float gameTime = 0f;
 
     public static Vector2 SetBlockPos(int y, int x, int dropCount)
     {

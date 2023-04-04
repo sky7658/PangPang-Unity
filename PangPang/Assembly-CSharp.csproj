@@ -76,6 +76,7 @@
     <Compile Include="Assets\Scripts\Action\BlockAction.cs" />
     <Compile Include="Assets\Scripts\Board\Board.cs" />
     <Compile Include="Assets\Scripts\Particle\ExplosionPool.cs" />
+    <Compile Include="Assets\Scripts\Board\Hint.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
