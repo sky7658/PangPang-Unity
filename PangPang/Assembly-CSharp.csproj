@@ -59,7 +59,7 @@
     <Compile Include="Assets\Scripts\Particle\Explosion.cs" />
     <Compile Include="Assets\Scripts\Board\Block\Block.cs" />
     <Compile Include="Assets\Scripts\Board\BlockController.cs" />
-    <Compile Include="Assets\Scripts\CameraAgent.cs" />
+    <Compile Include="Assets\Scripts\Screen\CameraAgent.cs" />
     <Compile Include="Assets\Scripts\Quest\MatchQuest.cs" />
     <Compile Include="Assets\Scripts\Input\InputBase.cs" />
     <Compile Include="Assets\Scripts\Button\SceneChangeButton.cs" />
@@ -82,6 +82,7 @@
     <Compile Include="Assets\Scripts\Board\Board.cs" />
     <Compile Include="Assets\Scripts\Particle\ExplosionPool.cs" />
     <Compile Include="Assets\Scripts\Button\CancleButton.cs" />
+    <Compile Include="Assets\Scripts\Screen\ScreenFixed.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">

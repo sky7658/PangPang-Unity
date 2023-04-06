@@ -18,7 +18,7 @@ public static class BaseInfo
     public static float activeHintTime = 5f;
     public static float comboResetTime = 3f;
 
-    public static float gameTime = 0f;
+    public static float gameTime { get; set; }
 
     public static Vector2 SetBlockPos(int y, int x, int dropCount)
     {

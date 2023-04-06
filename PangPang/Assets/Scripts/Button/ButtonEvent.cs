@@ -29,6 +29,7 @@ namespace PangPang.ButtonEvent
                     if (optionWindow != null)
                     {
                         optionWindow.SetActive(true);
+                        if (set) Stage.GameState.GamePause();
                         optionWindow.transform.GetChild(3).gameObject.SetActive(set);
                         optionWindow.transform.GetChild(4).gameObject.SetActive(set);
                         optionWindow.transform.GetChild(5).gameObject.SetActive(set);
@@ -43,6 +44,7 @@ namespace PangPang.ButtonEvent
 
             if (window == null) return;
 
+            Stage.GameState.GameContinue();
             window.gameObject.SetActive(false);
         }
     }

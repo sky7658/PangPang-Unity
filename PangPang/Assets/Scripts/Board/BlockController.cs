@@ -369,13 +369,16 @@ namespace PangPang.Board
             }
         }
 
-        void Update()
+        private void GamePlay()
         {
             MouseDrag();
-
             if (hint.IsHint()) ActiveHint(true);
-
             score.ResetCombo();
+        }
+
+        void Update()
+        {
+            if (Time.timeScale > 0) GamePlay();
         }
     }
 }
