@@ -13,10 +13,15 @@ namespace PangPang.Board
 
         public Score()
         {
+            InitScoreCombo();
+            resetTime = BaseInfo.comboResetTime;
+        }
+
+        public void InitScoreCombo()
+        {
             curScore = 0;
             curCombo = 0;
             pastTime = 0f;
-            resetTime = BaseInfo.comboResetTime;
         }
 
         public void ScoreUpdate(int addScore)

@@ -62,11 +62,16 @@
     <Compile Include="Assets\Scripts\CameraAgent.cs" />
     <Compile Include="Assets\Scripts\Quest\MatchQuest.cs" />
     <Compile Include="Assets\Scripts\Input\InputBase.cs" />
+    <Compile Include="Assets\Scripts\Button\SceneChangeButton.cs" />
+    <Compile Include="Assets\Scripts\Sound\AudioControl.cs" />
     <Compile Include="Assets\Scripts\Board\ScoreText.cs" />
     <Compile Include="Assets\Scripts\BaseInfo.cs" />
     <Compile Include="Assets\Scripts\Input\TouchHandler.cs" />
     <Compile Include="Assets\Scripts\BackBoard.cs" />
     <Compile Include="Assets\Scripts\Button\ButtonEvent.cs" />
+    <Compile Include="Assets\Scripts\Button\OptionButton.cs" />
+    <Compile Include="Assets\Scripts\Board\Hint.cs" />
+    <Compile Include="Assets\Scripts\Sound\SoundManager.cs" />
     <Compile Include="Assets\Scripts\Board\Block\BlockDefine.cs" />
     <Compile Include="Assets\Scripts\Board\Block\BlockPool.cs" />
     <Compile Include="Assets\Scripts\Input\MouseHandler.cs" />
@@ -76,7 +81,7 @@
     <Compile Include="Assets\Scripts\Action\BlockAction.cs" />
     <Compile Include="Assets\Scripts\Board\Board.cs" />
     <Compile Include="Assets\Scripts\Particle\ExplosionPool.cs" />
-    <Compile Include="Assets\Scripts\Board\Hint.cs" />
+    <Compile Include="Assets\Scripts\Button\CancleButton.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">

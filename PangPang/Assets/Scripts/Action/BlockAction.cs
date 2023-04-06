@@ -66,12 +66,8 @@ namespace PangPang.Action
             while (hintBlock.isHintBlock)
             {
                 // Fade Out
-                while (elapsed > 0f)
+                while (elapsed > 0f && hintBlock.isHintBlock)
                 {
-                    if(!hintBlock.isHintBlock)
-                    {
-                        break;
-                    }
                     elapsed -= Time.smoothDeltaTime;
                     spr.color = new Color(spr.color.r, spr.color.g, spr.color.b, elapsed / duration);
                     yield return null;
@@ -80,12 +76,8 @@ namespace PangPang.Action
                 elapsed = 0.0f;
 
                 // Fade In
-                while (elapsed < duration)
+                while (elapsed < duration && hintBlock.isHintBlock)
                 {
-                    if (!hintBlock.isHintBlock)
-                    {
-                        break;
-                    }
                     elapsed += Time.smoothDeltaTime;
                     spr.color = new Color(spr.color.r, spr.color.g, spr.color.b, elapsed / duration);
                     yield return null;

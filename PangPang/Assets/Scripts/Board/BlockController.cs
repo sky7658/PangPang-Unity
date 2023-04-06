@@ -51,6 +51,7 @@ namespace PangPang.Board
 
                 if (b2)
                 {
+                    Sound.SoundManager.Instance.PlaySFX("Swap");
                     StartCoroutine(ExecuteSwapAction(b1.transform.GetComponent<Block>(), arrowVector));
                 }
             }
@@ -157,10 +158,12 @@ namespace PangPang.Board
 
                     if ((MatchType)blockMatchType > MatchType.FIVE && block.match == (MatchType)blockMatchType)
                     {
+                        Sound.SoundManager.Instance.PlaySFX("Match");
                         ProcessMatchBlock(block);
                     }
                     else if ((MatchType)blockMatchType > MatchType.THREE && block.match == (MatchType)blockMatchType && block.transform.position.Equals(block.specialMoveTarget))
                     {
+                        Sound.SoundManager.Instance.PlaySFX("Match");
                         ProcessMatchBlock(block);
                     }
                 }
@@ -184,6 +187,7 @@ namespace PangPang.Board
                 {
                     score.ComboUpdate();
                     board.ComposeMatchBlock(block.match, block, blockList);
+                    Sound.SoundManager.Instance.PlaySFX("Match");
                     foreach(var matchBlock in blockList)
                     {
                         BlockPangType(matchBlock.myPos.x, matchBlock.myPos.y, null);
@@ -345,6 +349,8 @@ namespace PangPang.Board
             {
                 AroundPang(baseBlock.myPos.x, baseBlock.myPos.y, 3, null);
             }
+
+            Sound.SoundManager.Instance.PlaySFX("Match");
 
             return true;
         }

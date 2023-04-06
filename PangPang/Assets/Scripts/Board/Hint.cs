@@ -10,6 +10,11 @@ namespace PangPang.Board
         public bool isHintTurnOn { get; private set; }
         public Hint()
         {
+            InitHint();
+        }
+
+        public void InitHint()
+        {
             pastTime = 0f;
             isHintTurnOn = false;
         }
